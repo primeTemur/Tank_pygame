@@ -11,6 +11,24 @@ clock = pygame.time.Clock()
 
 fontUI = pygame.font.Font(None,30)
 
+imgBrick = pygame.image.load('images/block_brick.png')
+imgTanks = [
+    pygame.image.load('images/tank1.png'),
+    pygame.image.load('images/tank2.png'),
+    pygame.image.load('images/tank3.png'),
+    pygame.image.load('images/tank4.png'),
+    pygame.image.load('images/tank5.png'),
+    pygame.image.load('images/tank6.png'),
+    pygame.image.load('images/tank7.png'),
+    pygame.image.load('images/tank8.png'),
+    ]
+
+imgBangs = [
+    pygame.image.load('images/bang1.png'),
+    pygame.image.load('images/bang2.png'),
+    pygame.image.load('images/bang3.png'),
+]
+
 DIRECTS = [[0,-1],[1,0],[0,1],[-1,0]]
 
 class UI:
@@ -52,10 +70,18 @@ class Tank:
         self.keyDOWN = keyList[3]
         self.keySHOT = keyList[4]
 
+        self.rank = 0
+        self.image = pygame.transform.rotate(imgTanks[self.rank], -self.direct * 90)
+        self.rect = self.image.get_rect(center = self.rect.center)
+
 
 
 
     def update(self):
+        self.image = pygame.transform.rotate(imgTanks[self.rank], -self.direct * 90)
+        self.image = pygame.transform.scale(self.image, (self.image.get_width() -5,self.image.get_height() -5))
+        self.rect = self.image.get_rect(center = self.rect.center)
+
         oldX,oldY = self.rect.topleft
         if keys[self.keyLEFT]:
             self.rect.x -= self.moveSpeed
@@ -83,11 +109,7 @@ class Tank:
         if self.shotTimer > 0: self.shotTimer -= 1
     
     def draw(self):
-        pygame.draw.rect(window,self.color,self.rect)
-
-        x = self.rect.centerx + DIRECTS[self.direct][0] * 30
-        y = self.rect.centery + DIRECTS[self.direct][1] * 30
-        pygame.draw.line(window,'white',self.rect.center,(x,y),4)
+        window.blit(self.image,self.rect)
     
     def damage(self,value):
         self.hp -= value
@@ -121,6 +143,17 @@ class Bullet:
     def draw(self):
         pygame.draw.circle(window,'yellow',(self.px,self.py),2)
 
+class Bang:
+    def __init__(self):
+        pass
+
+    def update(self):
+        pass
+
+    def draw(self):
+        pass
+
+    
 class Block:
     def __init__(self,px,py,size):
         objects.append(self)
@@ -134,8 +167,7 @@ class Block:
         pass
 
     def draw(self):
-        pygame.draw.rect(window,'green',self.rect)
-        pygame.draw.rect(window,'gray20',self.rect,2)
+        window.blit(imgBrick,self.rect)
 
     def damage(self,value):
         self.hp -= value
