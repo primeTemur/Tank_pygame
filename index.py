@@ -97,8 +97,8 @@ class Tank:
             self.direct = 2
         
         for obj in objects:
-            if obj != self and self.rect.colliderect(obj.rect):
-                self.rect.topleft = oldX,oldY
+            if obj != self and obj.type == 'block' and self.rect.colliderect(obj.rect):
+                self.rect.topleft = oldX, oldY
         
         if keys[self.keySHOT] and self.shotTimer == 0:
             dx = DIRECTS[self.direct][0] * self.bulletSpeed
@@ -135,23 +135,31 @@ class Bullet:
             bullets.remove(self)
         else:
             for obj in objects:
-                if obj != self.parent and obj.rect.collidepoint(self.px,self.py):
+                 if obj != self.parent and obj.type != 'bang' and obj.rect.collidepoint(self.px, self.py):
                     obj.damage(self.damage)
                     bullets.remove(self)
+                    Bang(self.px,self.py)
                     break
 
     def draw(self):
         pygame.draw.circle(window,'yellow',(self.px,self.py),2)
 
 class Bang:
-    def __init__(self):
-        pass
+    def __init__(self,px,py):
+        objects.append(self)
+        self.type = 'bang'
+        self.px,self.py = px,py
+        
+        self.frame = 0
 
     def update(self):
-        pass
+        self.frame += 0.2
+        if self.frame >= 3: objects.remove(self)
 
     def draw(self):
-        pass
+        image = imgBangs[int(self.frame)]
+        rect = image.get_rect(center = (self.px, self.py))
+        window.blit(image, rect)
 
     
 class Block:
