@@ -19,6 +19,11 @@ class Tank:
         self.direct = direct
         self.moveSpeed = 2
 
+        self.shotTimer = 0
+        self.shotDelay = 60
+        self.bulletSpeed = 5
+        self.bulletDamage = 1
+
         self.keyLEFT = keyList[0]
         self.keyRIGHT = keyList[1]
         self.keyUP = keyList[2]
@@ -41,13 +46,40 @@ class Tank:
         elif keys[self.keyDOWN]:
             self.rect.y += self.moveSpeed
             self.direct = 2
+        
+        if keys[self.keySHOT] and self.shotTimer == 0:
+            dx = DIRECTS[self.direct][0] * self.bulletSpeed
+            dy = DIRECTS[self.direct][1] * self.bulletSpeed
+            Bullet(self,self.rect.centerx,self.rect.centery,dx,dy,self.bulletDamage)
+            self.shotTimer = self.shotDelay
+        
+        if self.shotTimer > 0: self.shotTimer -= 1
     
     def draw(self):
         pygame.draw.rect(window,self.color,self.rect)
+
         x = self.rect.centerx + DIRECTS[self.direct][0] * 30
         y = self.rect.centery + DIRECTS[self.direct][1] * 30
         pygame.draw.line(window,'white',self.rect.center,(x,y),4)
 
+class Bullet:
+    def __init__(self,parent,px,py,dx,dy,damage):
+        bullets.append(self)
+        self.parent = parent
+        self.px,self.py = px,py
+        self.dx,self.dy = dx,dy
+        self.damage = damage
+
+
+    
+    def update(self):
+        self.px +=self.dx
+        self.py +=self.dy
+
+    def draw(self):
+        pygame.draw.circle(window,'yellow',(self.px,self.py),2)
+
+bullets = []
 objects = []
 Tank('blue',100,275,0,(pygame.K_a,pygame.K_d,pygame.K_w,pygame.K_s,pygame.K_SPACE))
 Tank('red',675,275,0,(pygame.K_LEFT,pygame.K_RIGHT,pygame.K_UP,pygame.K_DOWN,pygame.K_KP_ENTER))
@@ -62,9 +94,11 @@ while play:
 
     keys = pygame.key.get_pressed()
 
+    for bullet in bullets: bullet.update()
     for obj in objects: obj.update()
 
     window.fill('black')
+    for bullet in bullets: bullet.draw()
     for obj in objects: obj.draw()
 
 
