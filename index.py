@@ -1,4 +1,5 @@
 import pygame
+from random import randint
 pygame.init()
 
 WIDTH, HEIGHT = 800,600
@@ -8,7 +9,27 @@ TITLE = 32
 window = pygame.display.set_mode((WIDTH,HEIGHT))
 clock = pygame.time.Clock()
 
+fontUI = pygame.font.Font(None,30)
+
 DIRECTS = [[0,-1],[1,0],[0,1],[-1,0]]
+
+class UI:
+    def __init__(self):
+        pass
+
+    def update(self):
+        pass
+
+    def draw(self):
+        i = 0
+        for obj in objects:
+            if obj.type == 'tank':
+                pygame.draw.rect(window,obj.color, (5 + i * 70,5, 22,22))
+
+                text = fontUI.render(str(obj.hp),1,obj.color)
+                rect = text.get_rect(center = (5 + i * 70+32,5+11))
+                window.blit(text, rect)
+                i += 1
 
 class Tank:
     def __init__(self,color,px,py,direct,keyList):
@@ -23,6 +44,7 @@ class Tank:
         self.shotDelay = 60
         self.bulletSpeed = 5
         self.bulletDamage = 1
+        self.hp = 5
 
         self.keyLEFT = keyList[0]
         self.keyRIGHT = keyList[1]
@@ -34,6 +56,7 @@ class Tank:
 
 
     def update(self):
+        oldX,oldY = self.rect.topleft
         if keys[self.keyLEFT]:
             self.rect.x -= self.moveSpeed
             self.direct = 3
@@ -46,6 +69,10 @@ class Tank:
         elif keys[self.keyDOWN]:
             self.rect.y += self.moveSpeed
             self.direct = 2
+        
+        for obj in objects:
+            if obj != self and self.rect.colliderect(obj.rect):
+                self.rect.topleft = oldX,oldY
         
         if keys[self.keySHOT] and self.shotTimer == 0:
             dx = DIRECTS[self.direct][0] * self.bulletSpeed
@@ -61,6 +88,12 @@ class Tank:
         x = self.rect.centerx + DIRECTS[self.direct][0] * 30
         y = self.rect.centery + DIRECTS[self.direct][1] * 30
         pygame.draw.line(window,'white',self.rect.center,(x,y),4)
+    
+    def damage(self,value):
+        self.hp -= value
+        if self.hp <= 0:
+            objects.remove(self)
+            print(self.color,'dead')
 
 class Bullet:
     def __init__(self,parent,px,py,dx,dy,damage):
@@ -76,14 +109,58 @@ class Bullet:
         self.px +=self.dx
         self.py +=self.dy
 
+        if self.px < 0 or self.px > WIDTH or self.py < 0 or self.py > HEIGHT:
+            bullets.remove(self)
+        else:
+            for obj in objects:
+                if obj != self.parent and obj.rect.collidepoint(self.px,self.py):
+                    obj.damage(self.damage)
+                    bullets.remove(self)
+                    break
+
     def draw(self):
         pygame.draw.circle(window,'yellow',(self.px,self.py),2)
+
+class Block:
+    def __init__(self,px,py,size):
+        objects.append(self)
+        self.type = 'block'
+
+        self.rect = pygame.Rect(px,py,size,size)
+        self.hp = 1
+        
+
+    def update(self):
+        pass
+
+    def draw(self):
+        pygame.draw.rect(window,'green',self.rect)
+        pygame.draw.rect(window,'gray20',self.rect,2)
+
+    def damage(self,value):
+        self.hp -= value
+        if self.hp <= 0: objects.remove(self)
+
 
 bullets = []
 objects = []
 Tank('blue',100,275,0,(pygame.K_a,pygame.K_d,pygame.K_w,pygame.K_s,pygame.K_SPACE))
 Tank('red',675,275,0,(pygame.K_LEFT,pygame.K_RIGHT,pygame.K_UP,pygame.K_DOWN,pygame.K_KP_ENTER))
+ui = UI()
 
+
+for _ in range(50):
+    while True:
+        x = randint(0,WIDTH//TITLE - 1) * TITLE
+        y = randint(0,WIDTH//TITLE - 1) * TITLE
+        rect = pygame.Rect(x,y,TITLE,TITLE)
+        fined = False
+        for obj in objects:
+            if rect.colliderect(obj.rect): fined = True
+        
+        if not fined: break
+    
+    Block(x,y,TITLE)
 
 play = True
 while play:
@@ -96,10 +173,12 @@ while play:
 
     for bullet in bullets: bullet.update()
     for obj in objects: obj.update()
+    ui.update()
 
     window.fill('black')
     for bullet in bullets: bullet.draw()
     for obj in objects: obj.draw()
+    ui.draw()
 
 
     pygame.display.update()
